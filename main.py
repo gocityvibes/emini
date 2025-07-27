@@ -1,21 +1,20 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/')
-def home():
-    return "E-mini GPT Bot Backend Running"
+trades = []
 
-@app.route('/trade', methods=['POST'])
-def trade():
-    data = request.json
-    # Placeholder for actual trade logic
-    return jsonify({"status": "success", "message": "Trade endpoint reached", "data": data})
+@app.route('/start', methods=['POST'])
+def start_bot():
+    return 'Bot started'
 
-if __name__ == '__main__':
-    app.run()
+@app.route('/stop', methods=['POST'])
+def stop_bot():
+    return 'Bot stopped'
+
+@app.route('/trade-log', methods=['GET'])
+def trade_log():
+    return jsonify(trades)
