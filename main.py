@@ -91,3 +91,38 @@ def analytics():
         "win_pct": win_pct,
         "pnl_total": pnl_total
     })
+
+
+
+# === Toggle Feature Flags ===
+ironwall_enabled = False
+chrome_enabled = False
+shadow_enabled = False
+
+@app.route("/toggle", methods=["POST"])
+def toggle_feature():
+    global ironwall_enabled, chrome_enabled, shadow_enabled
+    data = request.get_json()
+    feature = data.get("feature")
+
+    if feature == "ironwall":
+        ironwall_enabled = not ironwall_enabled
+        return jsonify({"status": f"Ironwall {'ON' if ironwall_enabled else 'OFF'}"})
+    elif feature == "chrome":
+        chrome_enabled = not chrome_enabled
+        return jsonify({"status": f"Chrome {'ON' if chrome_enabled else 'OFF'}"})
+    elif feature == "shadow":
+        shadow_enabled = not shadow_enabled
+        return jsonify({"status": f"Shadow {'ON' if shadow_enabled else 'OFF'}"})
+    else:
+        return jsonify({"error": "Invalid feature"}), 400
+
+# Optional root display of status
+@app.route("/")
+def status():
+    return jsonify({
+        "status": "Bot online",
+        "ironwall": ironwall_enabled,
+        "chrome": chrome_enabled,
+        "shadow": shadow_enabled
+    })
