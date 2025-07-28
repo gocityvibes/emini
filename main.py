@@ -8,7 +8,6 @@ CORS(app)
 trade_log = []
 bot_running = False
 
-# Mocked Chrome Filter check (simulates 3+ of 8 confirmations)
 def chrome_filter_mock():
     indicators = {
         "RSI": True,
@@ -23,31 +22,43 @@ def chrome_filter_mock():
     passed = [k for k, v in indicators.items() if v]
     return len(passed) >= 3, passed
 
+def shadow_filter_mock():
+    context_signals = {
+        "Multi-timeframe Confirmation": True,
+        "News Landmine Check": False,
+        "Candle Pattern Type": True,
+        "SPY/QQQ Sentiment": True,
+        "Trap Pattern Detection": True
+    }
+    passed = [k for k, v in context_signals.items() if v]
+    return len(passed) >= 3, passed
+
 @app.route("/")
 def index():
-    return jsonify({"status": "Phase 2 backend with mocked indicators is live"})
+    return jsonify({"status": "Phase 3 backend with Shadow Filter active"})
 
 @app.route("/start", methods=["POST"])
 def start_bot():
     global bot_running
     bot_running = True
 
-    # Simulate a trade with indicator mock logic
-    passed_filter, passed_indicators = chrome_filter_mock()
-    if passed_filter:
+    passed_chrome, chrome_indicators = chrome_filter_mock()
+    passed_shadow, shadow_signals = shadow_filter_mock()
+
+    if passed_chrome and passed_shadow:
         trade = {
-            "symbol": "ES",
-            "side": "long",
-            "score": 97,
-            "reason": "Passed Chrome Filter with: " + ", ".join(passed_indicators),
-            "entry_price": 4502.75,
-            "exit_price": 4547.00,
-            "pnl": 44.25
+            "symbol": "NQ",
+            "side": "short",
+            "score": 96,
+            "reason": "Passed Chrome ({}), Shadow ({}).".format(", ".join(chrome_indicators), ", ".join(shadow_signals)),
+            "entry_price": 15882.50,
+            "exit_price": 15822.50,
+            "pnl": 60.00
         }
         trade_log.append(trade)
         return jsonify({"message": "Trade executed", "trade": trade})
     else:
-        return jsonify({"message": "No trade - Chrome Filter conditions not met"})
+        return jsonify({"message": "No trade - conditions not met", "chrome": passed_chrome, "shadow": passed_shadow})
 
 @app.route("/stop", methods=["POST"])
 def stop_bot():
