@@ -3,13 +3,18 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import time
 import random
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 trade_log = []
 bot_running = False
-session_start_time = time.time()
+
+# Load env config
+TRADOVATE_MODE = os.getenv("TRADOVATE_MODE", "paper")
+TRADOVATE_ACCOUNT_ID = os.getenv("TRADOVATE_ACCOUNT_ID", "demo123")
+CONTRACT_TYPE = os.getenv("CONTRACT_TYPE", "/MESU5")  # e.g., /ESU5 or /MNQU5
 
 def chrome_filter_mock():
     return True, ["RSI", "MACD", "VWAP"]
@@ -19,7 +24,7 @@ def shadow_filter_mock():
 
 @app.route("/")
 def index():
-    return jsonify({"status": "Phase 4 backend with analytics/logging active"})
+    return jsonify({"status": "Phase 5 backend with Tradovate execution toggle"})
 
 @app.route("/start", methods=["POST"])
 def start_bot():
@@ -40,6 +45,9 @@ def start_bot():
 
         trade = {
             "symbol": "ES",
+            "contract": CONTRACT_TYPE,
+            "mode": TRADOVATE_MODE,
+            "account_id": TRADOVATE_ACCOUNT_ID,
             "side": "long",
             "score": 97,
             "reason": f"Chrome: {', '.join(chrome_indicators)} | Shadow: {', '.join(shadow_signals)}",
