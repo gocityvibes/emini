@@ -8,15 +8,46 @@ CORS(app)
 trade_log = []
 bot_running = False
 
+# Mocked Chrome Filter check (simulates 3+ of 8 confirmations)
+def chrome_filter_mock():
+    indicators = {
+        "RSI": True,
+        "MACD": True,
+        "EMA Stack": False,
+        "VWAP": True,
+        "Volume Surge": False,
+        "Chart Pattern": True,
+        "Market Sentiment": False,
+        "GPT Score": True
+    }
+    passed = [k for k, v in indicators.items() if v]
+    return len(passed) >= 3, passed
+
 @app.route("/")
 def index():
-    return jsonify({"status": "GPT E-mini backend is live"})
+    return jsonify({"status": "Phase 2 backend with mocked indicators is live"})
 
 @app.route("/start", methods=["POST"])
 def start_bot():
     global bot_running
     bot_running = True
-    return jsonify({"message": "Bot started"})
+
+    # Simulate a trade with indicator mock logic
+    passed_filter, passed_indicators = chrome_filter_mock()
+    if passed_filter:
+        trade = {
+            "symbol": "ES",
+            "side": "long",
+            "score": 97,
+            "reason": "Passed Chrome Filter with: " + ", ".join(passed_indicators),
+            "entry_price": 4502.75,
+            "exit_price": 4547.00,
+            "pnl": 44.25
+        }
+        trade_log.append(trade)
+        return jsonify({"message": "Trade executed", "trade": trade})
+    else:
+        return jsonify({"message": "No trade - Chrome Filter conditions not met"})
 
 @app.route("/stop", methods=["POST"])
 def stop_bot():
@@ -27,23 +58,3 @@ def stop_bot():
 @app.route("/trades", methods=["GET"])
 def get_trades():
     return jsonify({"trades": trade_log})
-
-# Placeholder for GPT-3.5 scan + GPT-4o score + Tradovate order
-def simulated_trade_decision():
-    return {
-        "symbol": "ES",
-        "side": "long",
-        "score": 97,
-        "reason": "Bull flag + RSI oversold + SPY uptrend",
-        "entry_price": 4500.25,
-        "exit_price": 4545.75,
-        "pnl": 45.50
-    }
-
-# Simulate trade on bot start
-@app.before_request
-def simulate_trade():
-    global bot_running
-    if bot_running and request.path == "/start":
-        trade = simulated_trade_decision()
-        trade_log.append(trade)
