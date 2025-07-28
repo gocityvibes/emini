@@ -182,3 +182,49 @@ def daily_summary():
         "losses": len(losses),
         "total_profit": total_profit
     })
+
+
+
+# Smart Entry Evaluation
+@app.route("/smart-entry-check", methods=["POST"])
+def smart_entry_check():
+    data = request.json
+    symbol = data.get("symbol")
+    indicators = data.get("indicators", {})
+    score = int(data.get("score", 0))
+
+    pattern_check = gpt_check_patterns(symbol, indicators)
+    passes_all = pattern_check["score"] >= 90 and pattern_check["alignment_ok"]
+
+    return jsonify({
+        "symbol": symbol,
+        "pattern_reason": pattern_check["reason"],
+        "score": pattern_check["score"],
+        "trade_allowed": passes_all
+    })
+
+def gpt_check_patterns(symbol, indicators):
+    prompt = f"Analyze this trading setup for {symbol}:
+"
+    prompt += f"1-min RSI: {indicators.get('rsi_1m')} | MACD: {indicators.get('macd_1m')} | EMA: {indicators.get('ema_1m')}
+"
+    prompt += f"5-min RSI: {indicators.get('rsi_5m')} | MACD: {indicators.get('macd_5m')} | EMA: {indicators.get('ema_5m')}
+"
+    prompt += f"Daily RSI: {indicators.get('rsi_d')} | MACD: {indicators.get('macd_d')} | EMA: {indicators.get('ema_d')}
+"
+    prompt += f"VWAP: {indicators.get('vwap')} | Volume Surge: {indicators.get('vol_surge')}
+"
+    prompt += f"Return JSON with fields: reason, score (0-100), alignment_ok (boolean)"
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "You are a trading signal analyst."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    parsed = response.choices[0].message.content
+    try:
+        return json.loads(parsed)
+    except:
+        return {"reason": "Could not parse GPT response", "score": 0, "alignment_ok": False}
