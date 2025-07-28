@@ -1,2 +1,1 @@
-flask
-gunicorn
+# Contents of requirements.txt for Phase 10 master
