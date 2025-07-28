@@ -126,3 +126,59 @@ def status():
         "chrome": chrome_enabled,
         "shadow": shadow_enabled
     })
+
+
+
+import os
+import json
+from datetime import datetime
+
+# Trade log file
+LOG_FILE = "trade_log.json"
+MAX_TRADES_PER_DAY = 3
+
+# Utility: read log
+def read_log():
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+# Utility: write log
+def write_log(data):
+    with open(LOG_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+# Utility: add trade
+def log_trade(symbol, score, profit, toggles):
+    log = read_log()
+    log.append({
+        "timestamp": datetime.now().isoformat(),
+        "symbol": symbol,
+        "score": score,
+        "profit": profit,
+        "toggles": toggles
+    })
+    write_log(log)
+
+@app.route("/trade-log")
+def get_trade_log():
+    return jsonify(read_log())
+
+@app.route("/daily-summary")
+def daily_summary():
+    log = read_log()
+    today = datetime.now().date().isoformat()
+    today_trades = [t for t in log if t["timestamp"].startswith(today)]
+
+    wins = [t for t in today_trades if t["profit"] > 0]
+    losses = [t for t in today_trades if t["profit"] <= 0]
+    total_profit = sum(t["profit"] for t in today_trades)
+
+    return jsonify({
+        "date": today,
+        "trades": len(today_trades),
+        "wins": len(wins),
+        "losses": len(losses),
+        "total_profit": total_profit
+    })
