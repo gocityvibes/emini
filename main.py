@@ -1,41 +1,25 @@
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import time
+import random
 
 app = Flask(__name__)
 CORS(app)
 
 trade_log = []
 bot_running = False
+session_start_time = time.time()
 
 def chrome_filter_mock():
-    indicators = {
-        "RSI": True,
-        "MACD": True,
-        "EMA Stack": False,
-        "VWAP": True,
-        "Volume Surge": False,
-        "Chart Pattern": True,
-        "Market Sentiment": False,
-        "GPT Score": True
-    }
-    passed = [k for k, v in indicators.items() if v]
-    return len(passed) >= 3, passed
+    return True, ["RSI", "MACD", "VWAP"]
 
 def shadow_filter_mock():
-    context_signals = {
-        "Multi-timeframe Confirmation": True,
-        "News Landmine Check": False,
-        "Candle Pattern Type": True,
-        "SPY/QQQ Sentiment": True,
-        "Trap Pattern Detection": True
-    }
-    passed = [k for k, v in context_signals.items() if v]
-    return len(passed) >= 3, passed
+    return True, ["Multi-timeframe Confirmation", "Candle Pattern Type", "SPY/QQQ Sentiment"]
 
 @app.route("/")
 def index():
-    return jsonify({"status": "Phase 3 backend with Shadow Filter active"})
+    return jsonify({"status": "Phase 4 backend with analytics/logging active"})
 
 @app.route("/start", methods=["POST"])
 def start_bot():
@@ -46,19 +30,33 @@ def start_bot():
     passed_shadow, shadow_signals = shadow_filter_mock()
 
     if passed_chrome and passed_shadow:
+        entry_price = round(random.uniform(4500, 4600), 2)
+        exit_price = round(entry_price + random.uniform(20, 40), 2)
+        expected_price = round(entry_price - random.uniform(0.25, 1.0), 2)
+        duration = round(random.uniform(120, 900), 2)
+        pnl = round(exit_price - entry_price, 2)
+        slippage = round(entry_price - expected_price, 2)
+        win = pnl > 0
+
         trade = {
-            "symbol": "NQ",
-            "side": "short",
-            "score": 96,
-            "reason": "Passed Chrome ({}), Shadow ({}).".format(", ".join(chrome_indicators), ", ".join(shadow_signals)),
-            "entry_price": 15882.50,
-            "exit_price": 15822.50,
-            "pnl": 60.00
+            "symbol": "ES",
+            "side": "long",
+            "score": 97,
+            "reason": f"Chrome: {', '.join(chrome_indicators)} | Shadow: {', '.join(shadow_signals)}",
+            "entry_price": entry_price,
+            "expected_entry": expected_price,
+            "exit_price": exit_price,
+            "pnl": pnl,
+            "slippage": slippage,
+            "duration_sec": duration,
+            "win": win,
+            "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
         }
+
         trade_log.append(trade)
         return jsonify({"message": "Trade executed", "trade": trade})
     else:
-        return jsonify({"message": "No trade - conditions not met", "chrome": passed_chrome, "shadow": passed_shadow})
+        return jsonify({"message": "No trade - filter conditions not met"})
 
 @app.route("/stop", methods=["POST"])
 def stop_bot():
@@ -69,3 +67,19 @@ def stop_bot():
 @app.route("/trades", methods=["GET"])
 def get_trades():
     return jsonify({"trades": trade_log})
+
+@app.route("/analytics", methods=["GET"])
+def analytics():
+    if not trade_log:
+        return jsonify({"total_trades": 0, "wins": 0, "win_pct": 0, "pnl_total": 0})
+
+    total = len(trade_log)
+    wins = sum(1 for t in trade_log if t["win"])
+    pnl_total = round(sum(t["pnl"] for t in trade_log), 2)
+    win_pct = round((wins / total) * 100, 2)
+    return jsonify({
+        "total_trades": total,
+        "wins": wins,
+        "win_pct": win_pct,
+        "pnl_total": pnl_total
+    })
