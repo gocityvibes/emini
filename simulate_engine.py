@@ -1,0 +1,1 @@
+# Simulates trend/chop/news candles

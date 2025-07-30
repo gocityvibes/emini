@@ -1,6 +1,4 @@
-openai
-requests
-flask
+fastapi
 gunicorn
-
-flask-cors
+openai
+pandas
