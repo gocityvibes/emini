@@ -1,3 +1,19 @@
+
+# === SIMULATION MODE INJECTED ===
+SIMULATION_MODE = True
+
+def fake_market_data(symbol):
+    import random, time
+    return {
+        "symbol": symbol,
+        "price": round(random.uniform(3950, 4100), 2),
+        "volume": random.randint(10000, 50000),
+        "float": random.randint(10_000_000, 90_000_000),
+        "sentiment": random.choice(["bullish", "bearish", "neutral"]),
+        "news": random.choice(["lawsuit", "upgrade", "none"]),
+        "timestamp": time.time(),
+    }
+
 from flask import Flask
 from flask_cors import cross_origin
 
