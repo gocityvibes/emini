@@ -1,4 +1,6 @@
-fastapi
-uvicorn
-pydantic
-python-multipart
+openai
+requests
+flask
+gunicorn
+
+flask-cors
