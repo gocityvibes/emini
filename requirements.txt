@@ -1,6 +1,0 @@
-# Contents of requirements.txt for Phase 10 master
-flask
-flask-cors
-gunicorn
-openai
-requests
