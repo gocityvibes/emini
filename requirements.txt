@@ -1,6 +1,8 @@
-openai
-requests
-flask
+fastapi
+uvicorn
+pandas
+numpy
 gunicorn
-
-flask-cors
+python-multipart
+httpx
+pytz
