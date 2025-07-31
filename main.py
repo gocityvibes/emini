@@ -65,11 +65,7 @@ def get_explanations():
 # main entry for backend
 
 
-import sys
-if "--simulate" in sys.argv:
     from main_simulation_runner import run_full_simulation
-    run_full_simulation()
-    sys.exit()
 # --- End Simulation Hook ---
 
 is_running = False
