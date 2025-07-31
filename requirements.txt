@@ -4,3 +4,5 @@ flask
 gunicorn
 
 flask-cors
+pandas
+pytz
