@@ -12,6 +12,15 @@ bot_state = {
 }
 
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all for now; restrict later for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Import simulation runner
 from main_simulation_runner import run_full_simulation as _run_simulation
