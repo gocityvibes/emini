@@ -1,42 +1,27 @@
-from flask import Flask
-from flask_cors import cross_origin
+# main.py - FastAPI interface for sim broker control
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from live_runner import start_bot, stop_bot, get_summary, is_running
 
-app = Flask(__name__)
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# main entry for backend
-
-
-from flask import request, jsonify
-
-is_running = False
-pnl_total = 0.0
-trade_log = []
-
-@app.route("/status", methods=["GET"])
-@cross_origin()
-def status():
-    return jsonify({"running": is_running})
-
-@app.route("/start", methods=["POST"])
-@cross_origin()
+@app.get("/start-bot")
 def start():
-    global is_running
-    is_running = True
-    return jsonify({"message": "Trading started"})
+    if is_running():
+        return {"status": "already running"}
+    start_bot()
+    return {"status": "started"}
 
-@app.route("/stop", methods=["POST"])
-@cross_origin()
+@app.get("/stop-bot")
 def stop():
-    global is_running
-    is_running = False
-    return jsonify({"message": "Trading stopped"})
+    stop_bot()
+    return {"status": "stopped"}
 
-@app.route("/pnl", methods=["GET"])
-@cross_origin()
-def pnl():
-    return jsonify({"total": pnl_total})
+@app.get("/status")
+def status():
+    return {"running": is_running()}
 
-@app.route("/trade-log", methods=["GET"])
-@cross_origin()
-def trade_log_route():
-    return jsonify(trade_log)
+@app.get("/trade-summary")
+def summary():
+    return get_summary()

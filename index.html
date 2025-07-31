@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SimBot Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+        #status { margin-top: 20px; }
+        pre { background: #f4f4f4; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>📈 SimBot Real-Time Dashboard</h1>
+    <button onclick="startBot()">▶️ Start Bot</button>
+    <button onclick="stopBot()">⏹ Stop Bot</button>
+    <div id="status">Bot status: <span id="bot-status">Unknown</span></div>
+    <h3>Live Trade Summary:</h3>
+    <pre id="summary">Loading...</pre>
+
+    <script>
+        async function startBot() {
+            await fetch("/start-bot");
+            updateStatus();
+        }
+
+        async function stopBot() {
+            await fetch("/stop-bot");
+            updateStatus();
+        }
+
+        async function updateStatus() {
+            const res = await fetch("/status");
+            const data = await res.json();
+            document.getElementById("bot-status").innerText = data.running ? "Running" : "Stopped";
+        }
+
+        async function updateSummary() {
+            const res = await fetch("/trade-summary");
+            const data = await res.json();
+            document.getElementById("summary").innerText = JSON.stringify(data, null, 2);
+        }
+
+        setInterval(updateSummary, 3000);
+        setInterval(updateStatus, 3000);
+        updateStatus();
+        updateSummary();
+    </script>
+</body>
+</html>
