@@ -47,6 +47,7 @@ mock_broker = MockTradeStationBroker(initial_balance=100000.0)
 
 def run_full_simulation():
     print("Starting full trading simulation...")
+    trade_count = 0  # Global counter to limit trades
     global_df = pd.DataFrame() 
 
     for day_offset in range(TOTAL_SIM_DAYS):
