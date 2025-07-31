@@ -1,10 +1,10 @@
-from helpers import *
-from chrome import chrome_filter
-from shadow import shadow_filter
-from iron_curtain import iron_curtain_filter
-from sentinel import sentinel_says_exit
-from ema import calculate_ema
-from macd import calculate_macd
+from utils.helpers import *
+from filters.chrome import chrome_filter
+from filters.shadow import shadow_filter
+from filters.iron_curtain import iron_curtain_filter
+from exit_logic.sentinel import sentinel_says_exit
+from indicators.ema import calculate_ema
+from indicators.macd import calculate_macd
 import json
 import time
 
@@ -31,8 +31,25 @@ def score_trade_with_gpt4o(indicators):
             "reason": "Indicators neutral"
         }
 
+            "reason": "EMA 8 > EMA 21 and MACD bullish"
+        }
+    elif indicators['EMA_8'] < indicators['EMA_21'] and indicators['MACD_Hist'] < 0:
+        return {
+            "pattern": "Bearish EMA + MACD setup",
+            "direction": "short",
+            "score": 93,
+            "reason": "EMA 8 < EMA 21 and MACD bearish"
+        }
+    else:
+        return {
+            "pattern": "No clear signal",
+            "direction": "none",
+            "score": 70,
+            "reason": "Indicators neutral"
+        }
+
 def run_full_simulation(log_hook=print):
-    with open("candles.json", "r") as f:
+    with open("data/candles.json", "r") as f:
         candles = json.load(f)
 
     trade_log = []
@@ -74,5 +91,5 @@ def run_full_simulation(log_hook=print):
             if trade_count >= 50:
                 break
 
-    with open("trade_log.json", "w") as f:
+    with open("logs/trade_log.json", "w") as f:
         json.dump(trade_log, f, indent=2)
