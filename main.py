@@ -18,7 +18,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all for now; restrict later for security
     allow_credentials=True,
-    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -76,9 +75,3 @@ if "--simulate" in sys.argv:
 is_running = False
 pnl_total = 0.0
 trade_log = []
-
-@app.route("/status", methods=["GET"])
-@app.route("/start", methods=["POST"])
-@app.route("/stop", methods=["POST"])
-@app.route("/pnl", methods=["GET"])
-@app.route("/trade-log", methods=["GET"])
