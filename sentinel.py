@@ -1,1 +1,1 @@
-# trailing stop and exit logic
+# Sentinel trailing stop logic
