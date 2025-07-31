@@ -54,10 +54,28 @@ def compute_indicators(df):
 
 
 
-def score_trade_with_gpt4o(indicator_data):
-
-
-
+def score_trade_with_gpt4o(indicators):
+    if indicators['EMA_8'] > indicators['EMA_21'] and indicators['MACD_Hist'] > 0:
+        return {
+            'pattern': 'Bullish EMA + MACD',
+            'direction': 'long',
+            'score': 95,
+            'reason': 'EMA_8 > EMA_21 and MACD_Hist > 0'
+        }
+    elif indicators['EMA_8'] < indicators['EMA_21'] and indicators['MACD_Hist'] < 0:
+        return {
+            'pattern': 'Bearish EMA + MACD',
+            'direction': 'short',
+            'score': 93,
+            'reason': 'EMA_8 < EMA_21 and MACD_Hist < 0'
+        }
+    else:
+        return {
+            'pattern': 'No clear signal',
+            'direction': 'none',
+            'score': 70,
+            'reason': 'Neutral indicator setup'
+        }
     print(f"Simulating GPT-4o score for: {indicator_data['time']}")
 
 
@@ -477,6 +495,24 @@ def run_full_simulation(log_hook=None):
 
 
 
+        if not hasattr(sim_get_open_position, 'trade_count'):
+            sim_get_open_position.trade_count = 0
+        if sim_get_open_position.trade_count >= 50:
+            break
+        if score_data['direction'] != 'none':
+            sim_get_open_position.trade_count += 1
+            sim_place_ts_order(mock_broker, SIM_SYMBOL, score_data['direction'], current_price, 1)
+            if log_hook:
+                log_hook({
+                    'symbol': SIM_SYMBOL,
+                    'side': score_data['direction'],
+                    'timestamp': current_sim_time.isoformat(),
+                    'reason': score_data['reason']
+                })
+            hold_end_time = current_sim_time + timedelta(minutes=2)
+            while current_sim_time < hold_end_time:
+                current_sim_time += timedelta(minutes=1)
+            sim_close_position(mock_broker, SIM_SYMBOL)
             open_pos = sim_get_open_position(mock_broker, SIM_SYMBOL)
 
 
