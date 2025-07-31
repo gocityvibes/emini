@@ -161,3 +161,6 @@ def run_full_simulation(log_hook=None):
 import time
 if log_hook:
     log_hook({ "symbol": "SIM", "side": "buy", "timestamp": time.time(), "reason": "demo trade" })
+    if log_hook:
+        import time
+        log_hook({ 'symbol': 'SIM', 'side': 'buy', 'timestamp': time.time(), 'reason': 'demo trade' })
