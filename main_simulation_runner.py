@@ -469,7 +469,7 @@ def run_full_simulation(log_hook=None):
                 'symbol': SIM_SYMBOL,
                 'side': 'buy',
                 'timestamp': current_sim_time.isoformat(),
-                'reason': score['reason']
+                'reason': gpt4o_result.get('reason', 'N/A')
             })
 
 
