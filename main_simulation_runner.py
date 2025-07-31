@@ -35,7 +35,7 @@ def compute_indicators(df):
 
 
     df['MACD_Hist'] = 0.0
-        score_data = score_trade_with_gpt4o(indicators)
+    score_data = score_trade_with_gpt4o(indicators)
 
 
 
@@ -500,8 +500,6 @@ def run_full_simulation(log_hook=None):
             sim_get_open_position.trade_count = 0
         if sim_get_open_position.trade_count >= 50:
             break
-        score_data = score_trade_with_gpt4o(indicators)
-        score_data = score_trade_with_gpt4o(indicators)
         if score_data['direction'] != 'none':
             sim_get_open_position.trade_count += 1
             sim_place_ts_order(mock_broker, SIM_SYMBOL, score_data['direction'], current_price, 1)
