@@ -35,6 +35,7 @@ def compute_indicators(df):
 
 
     df['MACD_Hist'] = 0.0
+        score_data = score_trade_with_gpt4o(indicators)
 
 
 
