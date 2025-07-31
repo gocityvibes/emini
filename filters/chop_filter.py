@@ -1,1 +1,0 @@
-# chop market filters logic
