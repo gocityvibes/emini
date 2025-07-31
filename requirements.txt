@@ -1,0 +1,6 @@
+openai
+requests
+flask
+gunicorn
+
+flask-cors
