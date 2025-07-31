@@ -315,17 +315,3 @@ def run_full_simulation(log_hook=None):
                     print(f"[{current_sim_time}] 🚫 Simulated Order Rejected: {trade_result['message']}")
 
 # --- PATCHED HOOK DEMO ---
-
-# This simulates a log call if no actual one exists
-
-import time
-
-if log_hook:
-
-    log_hook({ "symbol": "SIM", "side": "buy", "timestamp": time.time(), "reason": "demo trade" })
-
-    if log_hook:
-
-        import time
-
-        log_hook({ 'symbol': 'SIM', 'side': 'buy', 'timestamp': time.time(), 'reason': 'demo trade' })
