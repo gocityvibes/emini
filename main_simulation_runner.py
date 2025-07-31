@@ -35,7 +35,6 @@ def compute_indicators(df):
 
 
     df['MACD_Hist'] = 0.0
-    score_data = score_trade_with_gpt4o(indicators)
 
 
 
@@ -362,6 +361,7 @@ def run_full_simulation(log_hook=None):
 
 
                 "MACD_Hist": df_with_indicators['MACD_Hist'].iloc[-1],
+                score_data = score_trade_with_gpt4o(indicators)
 
 
 
