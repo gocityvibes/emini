@@ -1,0 +1,10 @@
+openai
+requests
+flask
+gunicorn
+
+flask-cors
+pandas
+pytz
+fastapi
+uvicorn[standard]
