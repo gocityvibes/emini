@@ -390,7 +390,7 @@ def run_full_simulation(log_hook=None):
 
 
             }
-            score_data = score_trade_with_gpt4o(indicators)
+            score_data = score_trade_with_gpt4o(latest_indicators)
             score_data = score_trade_with_gpt4o(latest_indicators)
 
 
