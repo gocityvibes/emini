@@ -1,1 +1,0 @@
-# Iron Curtain filter logic
