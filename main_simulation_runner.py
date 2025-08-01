@@ -637,7 +637,7 @@ def run_full_simulation(log_hook=None):
 
 
             current_price = df_with_indicators['Close'].iloc[-1]
-                trade_result = sim_place_ts_order(
+            trade_result = sim_place_ts_order(
 
 
 
