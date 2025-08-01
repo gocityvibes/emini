@@ -1,1 +1,0 @@
-# Shadow filter logic
