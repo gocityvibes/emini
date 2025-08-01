@@ -30,11 +30,16 @@ def compute_indicators(df):
 
 
 
-    df['RSI'] = 50.0
+    df['RSI'] = 100 - (100 / (1 + df['Close'].pct_change().rolling(14).mean()))
 
 
 
-    df['MACD_Hist'] = 0.0
+    
+    ema12 = df['Close'].ewm(span=12, adjust=False).mean()
+    ema26 = df['Close'].ewm(span=26, adjust=False).mean()
+    macd = ema12 - ema26
+    signal = macd.ewm(span=9, adjust=False).mean()
+    df['MACD_Hist'] = macd - signal
 
 
 
