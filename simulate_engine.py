@@ -4,7 +4,7 @@ import numpy as np
 from datetime import timedelta
 
 def generate_simulated_candles(symbol, start_datetime, num_candles, interval_minutes, start_price,
-                                volatility=0.00005, drift=0.000001, trend_strength=0.00001, chop_strength=0.00005):
+                                volatility=0.0002, drift=0.0, trend_strength=0.00005, chop_strength=0.0001):
     """
     Generates simulated OHLCV candles for a symbol over time.
     This creates realistic micro-trends, chop, and volatility.

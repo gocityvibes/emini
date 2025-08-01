@@ -507,6 +507,7 @@ def run_full_simulation(log_hook=None):
             break
         if score_data['direction'] != 'none':
             sim_get_open_position.trade_count += 1
+            current_price = df_with_indicators['Close'].iloc[-1]
             sim_place_ts_order(mock_broker, SIM_SYMBOL, score_data['direction'], current_price, 1)
             if log_hook:
                 log_hook({
@@ -635,6 +636,7 @@ def run_full_simulation(log_hook=None):
 
 
 
+            current_price = df_with_indicators['Close'].iloc[-1]
                 trade_result = sim_place_ts_order(
 
 
