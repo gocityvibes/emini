@@ -92,7 +92,7 @@ def _build_messages(snapshot: dict, constraints: dict, profile: dict) -> List[di
         label = example.get("label", "")
         rationale = example.get("rationale", "")
         
-        user_example = f"Market snapshot: {json.dumps(features, indent=2)}"
+        user_example = f"Market snapshot: {json.dumps(features, indent=2, default=str)}"
         assistant_example = json.dumps({
             "direction": label,
             "entry": features.get("current_price", 5000),
@@ -108,7 +108,7 @@ def _build_messages(snapshot: dict, constraints: dict, profile: dict) -> List[di
     # Current snapshot and constraints
     weights = profile.get("weights", {})
     current_prompt = f"""
-Market snapshot: {json.dumps(snapshot, indent=2)}
+Market snapshot: {json.dumps(snapshot, indent=2, default=str)}
 
 Constraints:
 - Allowed directions: {constraints.get('allowed_directions', ['long', 'short'])}

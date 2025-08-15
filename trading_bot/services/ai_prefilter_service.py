@@ -112,7 +112,7 @@ Focus on filtering out low-probability setups to save processing time."""
         score = 85 if label in ["long", "short"] else 25
         score_label = "pass" if score >= 80 else "fail"
         
-        user_example = f"Market snapshot: {json.dumps(features, indent=2)}"
+        user_example = f"Market snapshot: {json.dumps(features, indent=2, default=str)}"
         assistant_example = json.dumps({
             "score": score,
             "label": score_label,
@@ -124,7 +124,7 @@ Focus on filtering out low-probability setups to save processing time."""
     
     # Current snapshot for scoring
     current_prompt = f"""
-Market snapshot: {json.dumps(snapshot, indent=2)}
+Market snapshot: {json.dumps(snapshot, indent=2, default=str)}
 
 Provide your setup score in JSON format with:
 - score: numeric score 0-100 (integer)
