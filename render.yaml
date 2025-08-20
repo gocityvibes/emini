@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mes-scalper-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app -w 2 -k gthread -t 120 -b 0.0.0.0:$PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
