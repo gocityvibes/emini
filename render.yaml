@@ -3,7 +3,7 @@ services:
     name: mes-scalper-api
     env: python
     plan: starter
-    buildCommand: pip install -U pip setuptools wheel && pip install --only-binary=:all: numpy==1.26.4 pandas==2.2.2 lxml==5.2.2 && pip install -r requirements.txt
+    buildCommand: pip install -U pip setuptools wheel && pip install --only-binary=:all: numpy==1.26.4 pandas==2.2.3 lxml==5.2.2 && pip install -r requirements.txt
     startCommand: gunicorn app.main:app -w 2 -k gthread -t 120 -b 0.0.0.0:$PORT
     healthCheckPath: /health
     autoDeploy: true

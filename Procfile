@@ -1,1 +1,1 @@
-web: gunicorn app.main:app --bind 0.0.0.0:$PORT
+web: gunicorn app.main:app -w 2 -k gthread -t 120 -b 0.0.0.0:$PORT
