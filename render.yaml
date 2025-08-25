@@ -10,4 +10,4 @@ services:
     startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT app.main:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.14
+        value: 3.13.4
