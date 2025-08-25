@@ -1,14 +1,14 @@
 services:
   - type: web
-    name: render-clean-31014
+    name: render-clean-py313
     env: python
     plan: free
     autoDeploy: true
     buildCommand: |
       pip install -U pip setuptools wheel
-      pip install --only-binary=:all: numpy==1.26.4 pandas==2.2.3 lxml==5.2.2
       pip install -r requirements.txt
     startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT app.main:app
+    # Optional: lock to 3.13 to match defaults explicitly
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.14
+        value: 3.13.4

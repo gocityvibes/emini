@@ -5,11 +5,11 @@ app = Flask(__name__)
 
 @app.get("/health")
 def health():
-    return jsonify(status="ok", py=os.sys.version.split()[0])
+    return jsonify(status="ok", python=os.sys.version.split()[0])
 
 @app.get("/")
 def index():
-    return "Render clean (Py 3.10.14) is running ✅"
+    return "Render clean (Py 3.13) is running ✅"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
