@@ -10,6 +10,7 @@ import yaml
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from importlib import import_module
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -85,12 +86,14 @@ def initialize_components(config, app_state):
         # Import components safely
         from data import YahooProvider, TechnicalAnalyzer
         from prefilter import SessionValidator, PremiumFilter, CostOptimizer
-    # Import ConfluenceScorer (module path may vary)
+# Resolve ConfluenceScorer from either submodule or top-level
+def _get_ConfluenceScorer():
     try:
-        from prefilter.confluence_scorer import ConfluenceScorer
-    except Exception:  # fallback
-        from prefilter import ConfluenceScorer
-        
+        return import_module('prefilter.confluence_scorer').ConfluenceScorer
+    except Exception:
+        return import_module('prefilter').ConfluenceScorer
+ConfluenceScorer = _get_ConfluenceScorer()
+
         # Initialize data components
         logger.info("Initializing data providers...")
         components['data_provider'] = YahooProvider(
