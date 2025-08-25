@@ -14,6 +14,15 @@ from importlib import import_module
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+# Resolve ConfluenceScorer from either submodule or top-level
+def _get_ConfluenceScorer():
+    try:
+        return import_module('prefilter.confluence_scorer').ConfluenceScorer
+    except Exception:
+        return import_module('prefilter').ConfluenceScorer
+ConfluenceScorer = _get_ConfluenceScorer()
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -86,13 +95,6 @@ def initialize_components(config, app_state):
         # Import components safely
         from data import YahooProvider, TechnicalAnalyzer
         from prefilter import SessionValidator, PremiumFilter, CostOptimizer
-# Resolve ConfluenceScorer from either submodule or top-level
-def _get_ConfluenceScorer():
-    try:
-        return import_module('prefilter.confluence_scorer').ConfluenceScorer
-    except Exception:
-        return import_module('prefilter').ConfluenceScorer
-ConfluenceScorer = _get_ConfluenceScorer()
 
         # Initialize data components
         logger.info("Initializing data providers...")
