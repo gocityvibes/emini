@@ -85,6 +85,11 @@ def initialize_components(config, app_state):
         # Import components safely
         from data import YahooProvider, TechnicalAnalyzer
         from prefilter import SessionValidator, PremiumFilter, CostOptimizer
+        try:
+            from prefilter.confluence_scorer import ConfluenceScorer
+        except Exception:
+            # Fallback if package exposes it at top-level
+            from prefilter import ConfluenceScorer
         
         # Initialize data components
         logger.info("Initializing data providers...")
@@ -100,7 +105,11 @@ def initialize_components(config, app_state):
         # Initialize prefilter components
         logger.info("Initializing prefilter components...")
         components['session_validator'] = SessionValidator(config)
-        components['premium_filter'] = PremiumFilter(config)
+        components['confluence_scorer'] = ConfluenceScorer(config)
+        components['premium_filter'] = PremiumFilter(
+            components['session_validator'],
+            components['confluence_scorer']
+        )
         components['cost_optimizer'] = CostOptimizer(config)
         
         # Initialize learning components if Phase 3 modules available
@@ -300,3 +309,7 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Failed to start development server: {e}")
         print(f"Error starting server: {e}")
+
+    @app.route('/')
+    def root_index():
+        return 'OK', 200
