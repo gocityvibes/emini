@@ -1,0 +1,15 @@
+meta:
+  timezone: America/Chicago
+market:
+  symbol: MES=F
+sessions:
+  rth_a: "08:30-10:30"
+  rth_b: "13:00-15:00"
+prefilter:
+  min_score: 75
+gpt:
+  daily_call_cap: 5
+risk:
+  daily_point_stop: -3.0
+safety:
+  max_trades_per_day: 6
