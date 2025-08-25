@@ -85,11 +85,11 @@ def initialize_components(config, app_state):
         # Import components safely
         from data import YahooProvider, TechnicalAnalyzer
         from prefilter import SessionValidator, PremiumFilter, CostOptimizer
-        try:
-            from prefilter.confluence_scorer import ConfluenceScorer
-        except Exception:
-            # Fallback if package exposes it at top-level
-            from prefilter import ConfluenceScorer
+    # Import ConfluenceScorer (module path may vary)
+    try:
+        from prefilter.confluence_scorer import ConfluenceScorer
+    except Exception:  # fallback
+        from prefilter import ConfluenceScorer
         
         # Initialize data components
         logger.info("Initializing data providers...")
@@ -311,6 +311,13 @@ if __name__ == '__main__':
         logger.error(f"Failed to start development server: {e}")
         print(f"Error starting server: {e}")
 
-    @app.route('/')
-    def root_index():
-        return 'OK', 200
+@app.route("/", methods=["GET", "HEAD"])
+def _root():
+    return "", 200
+
+@app.errorhandler(404)
+def _not_found(e):
+    from flask import request
+    if request.method == "HEAD" and request.path == "/":
+        return "", 200
+    return "Not Found", 404
