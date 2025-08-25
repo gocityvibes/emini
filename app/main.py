@@ -107,6 +107,7 @@ def initialize_components(config, app_state):
         components['session_validator'] = SessionValidator(config)
         components['confluence_scorer'] = ConfluenceScorer(config)
         components['premium_filter'] = PremiumFilter(
+            config,
             components['session_validator'],
             components['confluence_scorer']
         )
