@@ -1,15 +1,67 @@
+# MES Scalper Configuration
 meta:
   timezone: America/Chicago
+
+# Market configuration
 market:
-  symbol: MES=F
+  symbol: 'MES=F'  # E-mini S&P 500 futures
+  contract_size: 5  # Dollar value per point
+  tick_size: 0.25   # Minimum price movement
+
+# Trading sessions (Central Time)
 sessions:
-  rth_a: "08:30-10:30"
-  rth_b: "13:00-15:00"
+  rth_a: '08:30-10:30'     # Morning RTH session
+  rth_b: '13:00-15:00'     # Afternoon RTH session
+  block_lunch: '10:30-13:00'  # Blocked lunch period
+
+# News event protection
+news_guard:
+  red_events_block_minutes_before: 10
+  red_events_block_minutes_after: 10
+
+# Prefilter scoring weights and thresholds
 prefilter:
   min_score: 75
+  weights:
+    trend: 25              # Multi-timeframe EMA alignment
+    volume: 20             # Volume expansion vs MA20
+    structure: 20          # Setup recognition (ORB/EMA/VWAP)
+    atr_band: 10          # Volatility in acceptable range
+    session: 10           # Valid trading session
+    body_cleanliness: 5   # Clean price action
+    liquidity: 5          # No air gaps
+    news: 5               # News event proximity
+  thresholds:
+    volume_multiple: 1.8      # Minimum volume vs MA20
+    orb_volume_multiple: 2.2  # Higher bar for ORB setups
+    atr_min: 0.8             # Minimum ATR (points)
+    atr_max: 2.0             # Maximum ATR (points)
+    min_body_ratio: 0.35     # Real body vs total range
+
+# GPT integration settings
 gpt:
-  daily_call_cap: 5
+  confidence_min: 85        # Minimum confidence to trade
+  floor_min: 82            # Adaptive floor minimum
+  floor_max: 92            # Adaptive floor maximum
+  daily_call_cap: 5        # Maximum GPT calls per day
+  batch_seconds: 30        # Batch scan interval
+
+# Risk management
 risk:
-  daily_point_stop: -3.0
+  tp: 1.25                 # Take profit (points)
+  sl: 0.75                 # Stop loss (points)
+  move_to_be_at: 0.50     # Move to breakeven at this profit
+  trail_after: 1.00       # Start trailing at this profit
+  trail_distance: 0.50    # Trailing stop distance
+  timeout_minutes: 2      # Trade timeout if BE not hit
+
+# Safety limits
 safety:
-  max_trades_per_day: 6
+  max_trades_per_day: 6           # Daily trade limit
+  max_consecutive_losses: 2       # Stop after consecutive losses
+  daily_stop: -3.0               # Daily loss limit (points)
+
+# Logging configuration
+logging:
+  retention_days: 30
+  detail: 'normal'  # normal, verbose, minimal

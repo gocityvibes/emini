@@ -1,9 +1,9 @@
 """
 MES Scalper Flask Application Factory
-"""
-MES Scalper Flask Application Factory
+
 Main orchestration and dependency injection for the trading system.
 """
+
 
 import os
 import yaml
