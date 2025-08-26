@@ -2,29 +2,46 @@ import threading, time, yaml
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+# Data & analysis
 from data.yahoo_provider import YahooProvider
 from data.technical_analyzer import TechnicalAnalyzer
+
+# Simulation
 from simulation.realistic_sim import RealisticSimulator, TradeDirection
+
+# Prefilter stack
+from prefilter.session_validator import SessionValidator
+from prefilter.confluence_scorer import ConfluenceScorer
 from prefilter.premium_filter import PremiumFilter
 from prefilter.cost_optimizer import CostOptimizer
+
+# GPT layer
 from gpt.trainer import GPTTrainer
 from gpt.rate_limiter import RateLimiter
 
 app = Flask(__name__)
 CORS(app)
 
-# load config.yaml
+# ---- Load config.yaml ----
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-yahoo = YahooProvider(symbol=config.get("symbol", "MES=F"))
+# ---- Construct components using config ----
+yahoo = YahooProvider(symbol=config.get("market", {}).get("symbol", "MES=F"))
 analyzer = TechnicalAnalyzer()
-simulator = RealisticSimulator(config=config)
-prefilter = PremiumFilter()
-optimizer = CostOptimizer()
-trainer = GPTTrainer()
-rate_limiter = RateLimiter()
 
+simulator = RealisticSimulator(config=config)
+
+session_validator = SessionValidator(config=config)
+confluence_scorer = ConfluenceScorer(config=config)
+prefilter = PremiumFilter(config=config, session_validator=session_validator, confluence_scorer=confluence_scorer)
+
+optimizer = CostOptimizer(config=config)
+
+trainer = GPTTrainer(config=config)
+rate_limiter = RateLimiter(config=config)
+
+# ---- App state ----
 app_state = {
     "running": False,
     "metrics": {"trades_today": 0, "net_points_today": 0.0, "avg_time_to_target_sec": 0, "win_rate_trailing20": 0.0},
@@ -46,6 +63,7 @@ def trainer_loop():
 
             df = analyzer.add_all_indicators(df, "1m")
             candidate = prefilter.evaluate(df)
+
             if not optimizer.should_send_to_gpt(candidate):
                 time.sleep(5)
                 continue

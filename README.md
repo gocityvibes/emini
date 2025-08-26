@@ -1,2 +1,1 @@
-# Backend with Yahoo + GPT Trading Loop
-Deploy to Render as a Web Service.
+# Backend v4: config.yaml + PremiumFilter wiring
