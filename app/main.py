@@ -1,4 +1,4 @@
-import threading, time
+import threading, time, yaml
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -13,9 +13,13 @@ from gpt.rate_limiter import RateLimiter
 app = Flask(__name__)
 CORS(app)
 
-yahoo = YahooProvider(symbol="MES=F")
+# load config.yaml
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+yahoo = YahooProvider(symbol=config.get("symbol", "MES=F"))
 analyzer = TechnicalAnalyzer()
-simulator = RealisticSimulator(config={})
+simulator = RealisticSimulator(config=config)
 prefilter = PremiumFilter()
 optimizer = CostOptimizer()
 trainer = GPTTrainer()
