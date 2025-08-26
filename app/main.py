@@ -1,4 +1,5 @@
 import threading, time, yaml
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -38,7 +39,7 @@ prefilter = PremiumFilter(config=config, session_validator=session_validator, co
 
 optimizer = CostOptimizer(config=config)
 
-trainer = GPTTrainer(config=config)
+trainer = GPTTrainer(config=config, api_key=os.getenv("OPENAI_API_KEY"))
 rate_limiter = RateLimiter(config=config)
 
 # ---- App state ----
