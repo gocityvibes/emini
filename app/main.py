@@ -10,18 +10,8 @@ import yaml
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from importlib import import_module
 from flask import Flask, jsonify
 from flask_cors import CORS
-
-# Resolve ConfluenceScorer from either submodule or top-level
-def _get_ConfluenceScorer():
-    try:
-        return import_module('prefilter.confluence_scorer').ConfluenceScorer
-    except Exception:
-        return import_module('prefilter').ConfluenceScorer
-ConfluenceScorer = _get_ConfluenceScorer()
-
 
 # Configure logging
 logging.basicConfig(
@@ -59,7 +49,7 @@ def _safe_get(config, path, default=None):
 
 def load_config():
     """Load configuration from config.yaml with error handling."""
-    config_path = Path(__file__).parent.parent / 'config.yaml'
+    config_path = (Path(os.getenv('CONFIG_PATH')) if os.getenv('CONFIG_PATH') else ((Path(__file__).parent / 'config.yaml') if (Path(__file__).parent / 'config.yaml').exists() else (Path(__file__).parent.parent / 'config.yaml')))
     
     try:
         if not config_path.exists():
@@ -95,7 +85,12 @@ def initialize_components(config, app_state):
         # Import components safely
         from data import YahooProvider, TechnicalAnalyzer
         from prefilter import SessionValidator, PremiumFilter, CostOptimizer
-
+        try:
+            from prefilter.confluence_scorer import ConfluenceScorer
+        except Exception:
+            # Fallback if package exposes it at top-level
+            from prefilter import ConfluenceScorer
+        
         # Initialize data components
         logger.info("Initializing data providers...")
         components['data_provider'] = YahooProvider(
@@ -316,13 +311,97 @@ if __name__ == '__main__':
         logger.error(f"Failed to start development server: {e}")
         print(f"Error starting server: {e}")
 
-@app.route("/", methods=["GET", "HEAD"])
-def _root():
-    return "", 200
+    @app.route('/')
+    def root_index():
+        return 'OK', 200
 
-@app.errorhandler(404)
-def _not_found(e):
-    from flask import request
-    if request.method == "HEAD" and request.path == "/":
-        return "", 200
-    return "Not Found", 404
+
+# ==================== PATCH: Minimal endpoints to avoid 404s ====================
+try:
+    from flask_cors import CORS as _PATCH_CORS
+    try:
+        _PATCH_CORS(app)
+    except Exception:
+        pass
+except Exception:
+    pass
+
+# Ensure app_state exists
+if 'app_state' not in globals() or not isinstance(app_state, dict):
+    app_state = {
+        'running': False,
+        'gpt_calls_used': 0,
+        'gpt_calls_cap': 5,
+        'budget_paused': False,
+        'budget_paused_reason': None,
+        'metrics': {
+            'trades_today': 0,
+            'net_points_today': 0.0,
+            'avg_time_to_target_sec': 0,
+            'win_rate_trailing20': 0.0,
+        },
+        'live': {},
+        'trades': [],
+        'fingerprints': [],
+    }
+
+def _add_if_missing(rule, endpoint_name, view_func, methods=('GET',)):
+    try:
+        existing = {r.rule for r in app.url_map.iter_rules()}
+    except Exception:
+        existing = set()
+    if rule not in existing:
+        app.add_url_rule(rule, endpoint_name, view_func, methods=list(methods))
+
+# Health + status (including /proxy/* for older checks)
+def _health():
+    return jsonify({'ok': True})
+def _status():
+    return jsonify({'running': app_state.get('running', False)})
+
+_add_if_missing('/health', 'patch_health', _health)
+_add_if_missing('/status', 'patch_status', _status)
+_add_if_missing('/proxy/health', 'patch_proxy_health', _health)
+_add_if_missing('/proxy/status', 'patch_proxy_status', _status)
+_add_if_missing('/proxy/api/health', 'patch_proxy_api_health', _health)
+_add_if_missing('/proxy/api/status', 'patch_proxy_api_status', _status)
+
+# Budget
+def _metrics_budget():
+    used = int(app_state.get('gpt_calls_used', 0))
+    cap  = int(app_state.get('gpt_calls_cap', 5))
+    return jsonify({
+        'calls_used': used,
+        'calls_cap': cap,
+        'calls_remaining': max(0, cap - used),
+        'paused': app_state.get('budget_paused', False),
+        'paused_reason': app_state.get('budget_paused_reason'),
+    })
+_add_if_missing('/metrics/budget', 'patch_metrics_budget', _metrics_budget)
+
+# Summary / Live / Trades / Fingerprints
+def _metrics_summary():
+    m = app_state.get('metrics', {})
+    return jsonify({
+        **m,
+        'running': app_state.get('running', False),
+        'gpt_calls_used': app_state.get('gpt_calls_used', 0),
+        'gpt_calls_cap': app_state.get('gpt_calls_cap', 5),
+    })
+_add_if_missing('/metrics/summary', 'patch_metrics_summary', _metrics_summary)
+_add_if_missing('/metrics/live', 'patch_metrics_live', lambda: jsonify(app_state.get('live', {})))
+_add_if_missing('/metrics/trades', 'patch_metrics_trades', lambda: jsonify(app_state.get('trades', [])))
+_add_if_missing('/metrics/fingerprints', 'patch_metrics_fingerprints', lambda: jsonify(app_state.get('fingerprints', [])))
+
+# Control
+def _control_start():
+    app_state['running'] = True
+    app_state['gpt_calls_used'] = int(app_state.get('gpt_calls_used', 0)) + 1
+    return jsonify({'ok': True, 'running': True})
+_add_if_missing('/control/start', 'patch_control_start', _control_start, methods=('POST',))
+
+def _control_stop():
+    app_state['running'] = False
+    return jsonify({'ok': True, 'running': False})
+_add_if_missing('/control/stop', 'patch_control_stop', _control_stop, methods=('POST',))
+# ==================== /PATCH ====================================================
