@@ -1,1 +1,1 @@
-# Backend v4: config.yaml + PremiumFilter wiring
+# Final Patched Trading App\n\nProduction-hardened version with thread safety, validation, CSV rotation, backoff, and Yahoo API hardening.\n
