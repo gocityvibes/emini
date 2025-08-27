@@ -2,6 +2,7 @@ flask
 flask-cors
 gunicorn
 PyYAML
+tenacity
 yfinance
 pandas
 numpy

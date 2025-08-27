@@ -1,12 +1,11 @@
-# Render Backend (Fixed)
-Built: 2025-08-27T17:33:29.726220Z
+# Render Backend (Fixed + Tenacity)
+Built: 2025-08-27T17:40:40.524312Z
 
-This package uses the app/ layout required by your Procfile and includes missing deps (gunicorn, PyYAML).
+- Includes missing dependency `tenacity`
+- Provides `data/` package with `__init__.py` and `yahoo_provider.py` to satisfy `from data.yahoo_provider import YahooProvider`
+- Also keeps `app/yahoo_provider.py` for legacy `import yahoo_provider`
 
-Deploy steps:
-1) Upload to Render (or push to GitHub).
-2) Ensure Build Command installs: `pip install -r requirements.txt`
-3) Start Command defaults from Procfile: `web: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT app.main:app`
-4) Confirm CORS is enabled in your Flask app for your Netlify domain.
-
-Python version is pinned via runtime.txt to 3.11.9 for compatibility.
+**Deploy**
+1) `pip install -r requirements.txt`
+2) Procfile: uses `app.main:app`
+3) Python: 3.11.9 (via runtime.txt)
