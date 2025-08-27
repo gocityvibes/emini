@@ -1,1 +1,1 @@
-Backend CORS Fix — handles OPTIONS for all routes; mirrors requested headers; returns 204.
+Stop fix + universal preflight CORS. Set ALLOWED_ORIGIN to your Netlify URL for production.

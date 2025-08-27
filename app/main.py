@@ -9,24 +9,25 @@ from flask import Flask, jsonify, request, send_file, abort, make_response
 from flask_cors import CORS
 
 app = Flask(__name__)
-# Broad CORS enablement
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
+# Allow your Netlify origin; use "*" while testing
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "*")
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGIN}}, supports_credentials=False)
 
 @app.after_request
 def add_cors_headers(resp):
-    origin = request.headers.get("Origin", "*")
-    resp.headers["Access-Control-Allow-Origin"] = origin
+    origin = request.headers.get("Origin", ALLOWED_ORIGIN)
+    resp.headers["Access-Control-Allow-Origin"] = origin if ALLOWED_ORIGIN == "*" or origin == ALLOWED_ORIGIN else ALLOWED_ORIGIN
     resp.headers["Access-Control-Allow-Headers"] = request.headers.get("Access-Control-Request-Headers", "Content-Type, X-ADMIN-KEY")
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Vary"] = "Origin"
     return resp
 
-# Explicit preflight handler for ALL paths (avoids 404/405 on OPTIONS)
+# Explicit preflight for ANY path. Returns 204 and mirrors requested headers.
 def _preflight_ok():
-    origin = request.headers.get("Origin", "*")
+    origin = request.headers.get("Origin", ALLOWED_ORIGIN)
     allow_headers = request.headers.get("Access-Control-Request-Headers", "Content-Type, X-ADMIN-KEY")
     resp = make_response("", 204)
-    resp.headers["Access-Control-Allow-Origin"] = origin
+    resp.headers["Access-Control-Allow-Origin"] = origin if ALLOWED_ORIGIN == "*" or origin == ALLOWED_ORIGIN else ALLOWED_ORIGIN
     resp.headers["Access-Control-Allow-Headers"] = allow_headers
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Access-Control-Max-Age"] = "86400"
@@ -41,13 +42,14 @@ def options_root():
 def options_all(_):
     return _preflight_ok()
 
-# ---------- Minimal state + worker (same as stopfix) ----------
+# ------- Minimal state + worker (STOP-FIX) -------
 DATA_DIR = os.environ.get("DATA_DIR", "datafiles")
 os.makedirs(DATA_DIR, exist_ok=True)
 GOLD_CSV = os.path.join(DATA_DIR, "gold.csv")
 NEG_CSV = os.path.join(DATA_DIR, "hard_negatives.csv")
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY")
+
 def require_admin_if_set():
     if not ADMIN_KEY:
         return
@@ -76,6 +78,7 @@ default_settings: Dict[str, Any] = {
     "spread_atr": 0.2,
     "trailing": {"enabled": False, "pct": 2.0},
 }
+
 app_state: Dict[str, Any] = {
     "running": False,
     "thread_alive": False,
@@ -89,8 +92,10 @@ app_state: Dict[str, Any] = {
 }
 
 def clamp(v, lo, hi):
-    try: x = float(v)
-    except Exception: return lo
+    try:
+        x = float(v)
+    except Exception:
+        return lo
     return max(lo, min(hi, x))
 
 def valid_settings(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -133,7 +138,6 @@ def persist_trade_to_csv(trade: Dict[str, Any]):
             if hdr_needed:
                 w.writeheader()
             w.writerow(trade)
-        # trim file
         with open(path, "r") as f:
             rows = f.readlines()
         if len(rows) > 1000:
@@ -143,8 +147,7 @@ def persist_trade_to_csv(trade: Dict[str, Any]):
         pass
 
 def recalc_metrics():
-    from datetime import date
-    today = date.today().isoformat()
+    today = datetime.utcnow().date().isoformat()
     trades = app_state["trades"]
     tday = [t for t in trades if (t.get("timestamp") or "")[:10] == today]
     net = sum(float(t.get("pnl_pts") or 0.0) for t in tday)
@@ -155,8 +158,6 @@ def recalc_metrics():
     app_state["metrics"] = {"trades_today":len(tday),"net_points_today":round(net,2),"win_rate_trailing20":round(wr,3),"avg_time_to_target_sec":avg}
 
 def generate_fake_trade(symbol: str) -> Dict[str, Any]:
-    import random
-    from datetime import datetime
     now = datetime.utcnow().isoformat()
     direction = random.choice(["LONG","SHORT"])
     entry = round(random.uniform(4500, 5600), 2)
