@@ -1,6 +1,10 @@
 flask
 flask-cors
+gunicorn
+PyYAML
 yfinance
 pandas
 numpy
-gunicorn
+requests
+python-dateutil
+pytz
