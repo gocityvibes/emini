@@ -1,13 +1,11 @@
-# Minimal server deps + legacy OpenAI SDK for compatibility
 flask
 flask-cors
 gunicorn
-PyYAML
-tenacity
-openai==0.28.1
-yfinance
 pandas
 numpy
+yfinance
 requests
 python-dateutil
 pytz
+tenacity
+PyYAML
