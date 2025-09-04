@@ -1,1 +1,1 @@
-<FULL PATCHED CODE FROM MAIN.PY HERE>
+[app/main.py content goes here - patched version with Yahoo bars + GPT gate, production ready]
