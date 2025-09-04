@@ -9,3 +9,4 @@ python-dateutil
 pytz
 tenacity
 PyYAML
+openai>=1.30.0
