@@ -1,12 +1,2 @@
-flask
-flask-cors
-gunicorn
-pandas
-numpy
-yfinance
-requests
-python-dateutil
-pytz
-tenacity
-PyYAML
-openai>=1.30.0
+flask==3.0.3
+gunicorn==21.2.0
