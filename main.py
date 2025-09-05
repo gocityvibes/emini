@@ -2,10 +2,19 @@ from flask import Flask, jsonify, request, send_file, Response, make_response
 from functools import wraps
 import io, csv, threading, time, os
 
+from yahoo_provider import fetch_ohlcv
+from gpt_decision import decide as gpt_decide, GPTNotConfigured
+
 app = Flask(__name__)
 
 # -------- CORS (Netlify + local dev) --------
-ALLOWED_ORIGINS = ['https://tradebotmicro.netlify.app', 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000']
+ALLOWED_ORIGINS = {
+    "https://tradebotmicro.netlify.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+}
 
 def _cors_headers():
     origin = request.headers.get("Origin")
@@ -17,7 +26,6 @@ def _cors_headers():
             "Access-Control-Allow-Headers": request.headers.get("Access-Control-Request-Headers", "Content-Type, Authorization"),
             "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
         }
-    # Default: block cross-site unless explicit
     return {}
 
 @app.before_request
@@ -40,7 +48,7 @@ STATE = {
     "engine": "running",          # running | stopped | paused
     "mode": "live",               # live | training
     "since": int(time.time()),
-    "version": "2025-09-04.2"
+    "version": "2025-09-04.3"
 }
 
 def set_state(**kwargs):
@@ -57,7 +65,6 @@ def require_running(fn):
     def wrapper(*args, **kwargs):
         s = get_state()
         if s["engine"] == "stopped":
-            # Silent to UI pollers; still gets CORS headers via after_request
             return Response(status=503, headers={"Retry-After": "30"})
         if s["engine"] == "paused":
             return jsonify({"ok": False, "status": "paused"}), 409
@@ -111,6 +118,51 @@ def control_resume():
     set_state(engine="running")
     return jsonify({"ok": True, "message": "engine resumed", "state": get_state()})
 
+# ---------- Yahoo endpoints (real) ----------
+@app.route("/train/yahoo")
+@require_running
+def train_yahoo():
+    symbol = request.args.get("symbol", "ES=F")
+    period = request.args.get("period", "7d")
+    interval = request.args.get("interval", "1m")
+    df = fetch_ohlcv(symbol, period=period, interval=interval)
+    if df is None or df.empty:
+        return jsonify({"ok": False, "error": "No data", "symbol": symbol}), 404
+    # Minimal "training" example: return counts
+    return jsonify({
+        "ok": True,
+        "symbol": symbol,
+        "rows": int(df.shape[0]),
+        "start": df.index.min().isoformat() if not df.empty else None,
+        "end": df.index.max().isoformat() if not df.empty else None
+    })
+
+@app.route("/live/last")
+@require_running
+def live_last():
+    symbol = request.args.get("symbol", "ES=F")
+    df = fetch_ohlcv(symbol, period="1d", interval="1m")
+    if df is None or df.empty:
+        return jsonify({"ok": False, "error": "No data"}), 404
+    last = df.iloc[-1].to_dict()
+    last["timestamp"] = df.index[-1].isoformat()
+    return jsonify({"ok": True, "symbol": symbol, "last": last})
+
+# ---------- GPT decision (real) ----------
+@app.route("/decide")
+@require_running
+def decide():
+    signal = request.args.get("signal", "neutral")
+    context = request.args.get("context", "")
+    try:
+        decision = gpt_decide(signal=signal, context=context)
+        return jsonify({"ok": True, "decision": decision})
+    except GPTNotConfigured as e:
+        # Informative error if OPENAI_API_KEY is missing
+        return jsonify({"ok": False, "error": str(e)}), 501
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"gpt_error: {e}"}), 500
+
 # ---------- Metrics (guarded) ----------
 @app.route("/metrics/summary")
 @require_running
@@ -152,14 +204,6 @@ def memory_hard_negatives():
     data = [{"ts": int(time.time()), "symbol": "ES", "pattern": "neg", "result": "loss"}]
     b = _csv_bytes(data, ["ts", "symbol", "pattern", "result"])
     return send_file(b, mimetype="text/csv", as_attachment=True, download_name="hard_negatives.csv")
-
-# ---------- Decision (guarded) ----------
-@app.route("/decide")
-@require_running
-def decide():
-    signal = request.args.get("signal", "neutral")
-    decision = {"decision": "hold", "signal": signal}
-    return jsonify({"ok": True, "decision": decision})
 
 # ---------- Entry point ----------
 if __name__ == "__main__":
